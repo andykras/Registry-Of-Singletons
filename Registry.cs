@@ -23,7 +23,7 @@ namespace RegistryOfSingletons
     /// You do not need to call it explicitly
     /// Every Singleton must call it by itself
     /// </summary>
-    /// <param name="singleton"></param>
+    /// <param name="singleton">instance</param>
     public static void Register(ISingleton singleton)
     {
       if (singleton == null) return;
@@ -37,7 +37,7 @@ namespace RegistryOfSingletons
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public static ISingleton InstanceOf<T>() where T :  class, ISingleton
+    public static ISingleton InstanceOf<T>() where T : class, ISingleton
     {
       RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
       smart.In();

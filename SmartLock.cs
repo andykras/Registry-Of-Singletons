@@ -18,7 +18,7 @@ namespace RegistryOfSingletons
     private readonly AutoResetEvent blockers = new AutoResetEvent(false);
 
     /// <summary>
-    /// Non-blocking threads are goes here
+    /// All threads that does not require critical section are starting from here
     /// </summary>
     public void In()
     {
@@ -27,7 +27,7 @@ namespace RegistryOfSingletons
     }
 
     /// <summary>
-    /// Non-blocking threads are outs here
+    /// All threads that does not require critical section are exiting from here
     /// </summary>
     public void Out()
     {

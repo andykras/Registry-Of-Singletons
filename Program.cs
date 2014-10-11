@@ -11,10 +11,13 @@ namespace RegistryOfSingletons
   class TestProgram
   {
     private static readonly ManualResetEvent WaitHereForOthersBeforeStart = new ManualResetEvent(false);
+
+    #region Setup
     private const int ThreadsCount = 100;
     private const int LoopCountForEachThread = 10000;
     private const bool ShowOutput = false;
     private const bool InitializationIfSingleThread = false;
+    #endregion
 
     /// <summary>
     /// Just print thread's name with thousand's prefix
