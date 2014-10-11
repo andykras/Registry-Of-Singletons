@@ -1,4 +1,3 @@
-
 #Registry of Singletons 
 
 This is a very simple example of registry for singletons. I was inspired the idea when I was reading GoF Design Patterns. There was an example to demonstrate how to create the same in C++ language.
@@ -12,14 +11,14 @@ So I challenged to myself.
 Singleton classes can register themselves by name in a well-known registry. The registry maps between string names and singletons. When clients needs a singleton, it asking registry for the singleton by name. The registry looks up the corresponding singleton and returns it. It was an original idea of GoF. 
 
 We can improve this approach by using template functions. Singletons would be registered their instances just in a registry list and client could look up instance of singleton by its type:
-```
+```csharp
 Registry.GetInstanceOf<MySingleton>();
 ```
 ##Implementation
 All it requires is a common interface for all Singleton classes
 that includes operations for the registry:
 
-```
+```csharp
   /// <summary>
   /// Registry of all singletons
   /// </summary>
@@ -52,7 +51,7 @@ Two remarks. I've chosen a static class for registry implementation instead of m
 I'd like to say is that as a way to access the object suggests to use the property instead of method. But unfortunately it is a limitation of C#. This [Generic Properties] blog post from Julian Bucknall is a pretty good explanation. Essentially it's a heap allocation problem.
 
 Let's back to our muttons. Where do Singleton classes register themselves? One possibility is in their constructor. For example, a MySingleton subclass could do the following:
-```
+```csharp
   public sealed class MySingleton : ISingleton
   {
     /// <summary>
@@ -73,7 +72,7 @@ Let's back to our muttons. Where do Singleton classes register themselves? One p
   }
 ```
 But who does call the static constructor? Referring to MSDN it's called automatically before the creation of the first instance or reference to any static members. We could defined static field and touch it somewhere to initialize statics, like this:
-```
+```csharp
 public sealed class MySingleton
 {
   private static readonly MySingleton instance = null;
@@ -85,7 +84,7 @@ public sealed class MySingleton
 }
 ```
 Somewhere in the code:
-```
+```csharp
 // initialize statics
 MySingleton.TouchMe();
 ```
@@ -93,11 +92,11 @@ MySingleton.TouchMe();
 Disadvantages of this way is that first of all we need remembering to call TouchMe(). We can get around this problem in C++ by defining a static instance of MySingleton in the cpp-file that contains MySingleton's implementation. But where do we have to call it in C#? Suppose we introduce the function, the-big-init-function, and call there all of our TouchMe. I might be the black sheep here, but I truly believe that this is a bad idea. Besides, it has a potential drawback, namely that instances of all possible Singletons must be created, or else they won't get registered. But I suppose we do not want initialize all exiting singletons before they actually called and even if they never will be called.
 
 So, another way to force a class constructor to run without having a reference to the type (i.e. reflection), you can use:
-```
+```csharp
 RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
 ```
 Thus GetInstanceOf could be as follows:
-```
+```csharp
     public static ISingleton GetInstanceOf<T>()
     {
       RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
@@ -108,7 +107,7 @@ Static constructor is called once, which is guaranted by CLR. Simple enough and 
 
 ##Speed and Thread-safe
 One thing which is of concern is a thread-safe. Suppose we have a bunch of threads that asking registry for singletons. What if the one thread is have to change registry list, while the other is accessing to it at the same time? Well one could use lock to prevent entering others thread to exclusive block:
-```
+```csharp
   lock(registry) {
     RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
     return registry.OfType<T>().FirstOrDefault();
@@ -117,7 +116,7 @@ One thing which is of concern is a thread-safe. Suppose we have a bunch of threa
 On the one hand it is a good solution and the other redundancy. Because when the all singletons are initialized the list would stay unchanged to the exit and searching instance from the registry does not require a critical section. Moreover this solution does not protect Register() function accessing from other threads. Let's have a look at situation, if someone from the other thread called static constructor it invokes singleton registration in registry list and from another thread someone try to get instance of another singleton. In that case we will likely access to potentially changing list.
 
 So I wrote a class that guarantees access to the critical section when all other threads that do not require exclusive access are gone and any other thread does not enter a critical section of code. I called it SmartLock:
-```
+```csharp
   /// <summary>
   /// Smart lock written by myself
   /// It can be used when you need to block some piece of code with exclusive access
@@ -157,7 +156,7 @@ So I wrote a class that guarantees access to the critical section when all other
   }
 ```
 According to this we need to rewrite Registry:
-```
+```csharp
     public static void Register(ISingleton singleton)
     {
       if (singleton == null) return;
@@ -181,7 +180,7 @@ According to this we need to rewrite Registry:
     }
 ```
 Finally I give you a time intervals which are obtained by a particular solution:
-```
+```csharp
       // 25s
       ISingleton instance;
       lock (registry) {
@@ -256,7 +255,7 @@ As we can see lock-way is 2-3 times slower than my solution.
 
 ##General Registry
 I would wondering if someone wants to create a general registry, but it is possible. It could look like this:
-```
+```csharp
   public static class Registry<I> where I : class
   {
     private static readonly List<I> registry = new List<I>();
@@ -268,14 +267,14 @@ I would wondering if someone wants to create a general registry, but it is possi
   }
 ```
 And we are able to write something like this:
-```
+```csharp
 Registry<ISingletion>.InstanceOf<MySingleton>().AnySingletonFunctionDo();
 Registry<AbstractFactory>.InstanceOf<ConcreteFactory>().Create();
 ```
-So we can add singletons in the appropriate registeries without any changes to the registry's code. This is possible due to the fact that Registry<ISingletion> and Registry<AbstractFactory> represents different static classes with corresponding sets of class fields. So that they will work independently and will not interfere with each other.
+So we can add singletons in the appropriate registries without any changes to the registry's code. This is possible due to the fact that `Registry<ISingletion>` and `Registry<AbstractFactory>` represents different static classes with corresponding sets of class fields. So that they will work independently and will not interfere with each other.
 
 But be aware and do not write stuff like that
-```
+```csharp
 Registry<ISingletion>.InstanceOf<MySingleton>().AnySingletonFunctionDo();
 Registry<MySingleton>.InstanceOf<MySingleton>().AnySingletonFunctionDo();
 ```
