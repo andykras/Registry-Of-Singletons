@@ -184,7 +184,8 @@ Finally I give you a time intervals which are obtained by a particular solution:
       // 25s
       ISingleton instance;
       lock (registry) {
-        if (!registry.OfType<T>().Any()) RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
+        if (!registry.OfType<T>().Any()) 
+          RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
         instance = registry.OfType<T>().FirstOrDefault();
       }
 
@@ -237,11 +238,13 @@ Finally I give you a time intervals which are obtained by a particular solution:
       }
 
       // 4s, non thread-safe for initialization (just for testing a maximum speed)
-      RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle); // initialization was in single thread before
+      // initialization was in single thread before
+      RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
       var instance = registry.OfType<T>().FirstOrDefault();
 
       // 6.7s
-      RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle); // with Enter\Exit in Register()
+      // with Enter\Exit in Register()
+      RuntimeHelpers.RunClassConstructor(typeof(T).TypeHandle);
       smart.In();
       var instance = registry.OfType<T>().FirstOrDefault();
       smart.Out();
